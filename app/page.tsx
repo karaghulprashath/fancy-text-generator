@@ -1,173 +1,405 @@
 "use client"
 
-import { useState, useEffect, useRef } from "react"
-import { Copy } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Textarea } from "@/components/ui/textarea"
 import { toast } from "@/hooks/use-toast"
+import { getFonts, transform } from "convert-unicode-fonts"
+import { Copy } from "lucide-react"
+import { useEffect, useRef, useState } from "react"
 
-// Unicode character mappings for different styles
-const fontStyles = {
-  normal: "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789",
-  bold: "𝐀𝐁𝐂𝐃𝐄𝐅𝐆𝐇𝐈𝐉𝐊𝐋𝐌𝐍𝐎𝐏𝐐𝐑𝐒𝐓𝐔𝐕𝐖𝐗𝐘𝐙𝐚𝐛𝐜𝐝𝐞𝐟𝐠𝐡𝐢𝐣𝐤𝐥𝐦𝐧𝐨𝐩𝐪𝐫𝐬𝐭𝐮𝐯𝐰𝐱𝐲𝐳𝟎𝟏𝟐𝟑𝟒𝟓𝟔𝟕𝟖𝟗",
-  italic: "𝘈𝘉𝘊𝘋𝘌𝘍𝘎𝘏𝘐𝘑𝘒𝘓𝘔𝘕𝘖𝘗𝘘𝘙𝘚𝘛𝘜𝘝𝘞𝘟𝘠𝘡𝘢𝘣𝘤𝘥𝘦𝘧𝘨ｈｉｊｋｌｍｎｏｐ𝘲𝘳𝘴ｔｕ𝘷ｗ𝘹ｙｚ0123456789",
-  boldItalic: "𝙰𝙱𝙲𝙳𝙴𝙵𝙶𝙷𝙸𝙹𝙺𝙻𝙼𝙽𝙾𝙿𝚀𝚁𝚂𝚃𝚄𝚅𝚆𝚇𝚈𝚉𝚊𝚋𝚌𝚍𝚎𝚏𝚐ｈｉｊｋｌｍｎ𝚘𝚙𝚚𝚛𝚜𝚝𝚞ｖ𝚠𝚡𝚢ｚ0123456789",
-  script: "𝒜ℬ𝒞𝒟ℰℱ𝒢ℋℐ𝒥𝒦ℒℳ𝒩𝒪𝒫𝒬ℛ𝒮𝒯𝒰𝒱𝒲𝒳𝒴𝒵𝒶𝒷𝒸𝒹ℯ𝒻ℊ𝒽𝒾𝒿𝓀𝓁𝓂𝓃ℴ𝓅𝓆𝓇𝓈𝓉𝓊𝓋𝓌𝓍𝓎𝓏0123456789",
-  fraktur: "𝔄𝔅ℭ𝔇𝔈𝔉𝔊ℌℑ𝔍𝔎𝔏𝔐𝔑𝔒𝔓𝔔ℜ𝔖𝔗𝔘𝔙𝔚𝔛𝔜ℨ𝔞𝔟𝔠𝔡𝔢𝔣𝔤𝔥𝔦𝔧𝔨𝔩𝔪𝔫𝔬𝔭𝔮𝔯𝔰𝔱𝔲𝔳𝔴𝔵𝔶𝔷0123456789",
-  monospace: "𝙰𝙱𝙲𝙳𝙴𝙵𝙶𝙷𝙸𝙹𝙺𝙻𝙼𝙽𝙾𝙿𝚀𝚁𝚂𝚃𝚄𝚅𝚆𝚇𝚈𝚉𝚊𝚋𝚌𝚍𝚎𝚏𝚐ｈｉｊｋｌｍｎ𝚘𝚙𝚚𝚛𝚜𝚝𝚞ｖ𝚠𝚡𝚢ｚ𝟶𝟷𝟸𝟹𝟺𝟻𝟼𝟽𝟾𝟿",
-  doubleStruck: "𝔸𝔹ℂ𝔻𝔼𝔽𝔾ℍ𝕀𝕁𝕂𝕃𝕄ℕ𝕆ℙℚℝ𝕊𝕋𝕌𝕍𝕎𝕏𝕐ℤ𝕒𝕓𝕔𝕕𝕖𝕗𝕘𝕙𝕚𝕛𝕜𝕝𝕞𝕟𝕠𝕡𝕢𝕣𝕤𝕥𝕦𝕧𝕨𝕩𝕪𝕫𝟘𝟙𝟚𝟛𝟜𝟝𝟞𝟟𝟠𝟡",
-  smallCaps: "ABCDEFGHIJKLMNOPQRSTUVWXYZᴀʙᴄᴅᴇғɢʜɪᴊᴋʟᴍɴᴏᴘǫʀsᴛᴜᴠᴡxʏᴢ0123456789",
-  superscript: "ᴬᴮᶜᴰᴱᶠᴳᴴᴵᴶᴷᴸᴹᴺᴼᴾᵠᴿˢᵀᵁⱽᵂˣʸᶻᵃᵇᶜᵈᵉᶠᵍʰⁱʲᵏˡᵐⁿᵒᵖᵠʳˢᵗᵘᵛʷˣʸᶻ⁰¹²³⁴⁵⁶⁷⁸⁹",
-  subscript: "ₐBCDₑFGₕᵢⱼₖₗₘₙₒₚQᵣₛₜᵤᵥWₓYZₐᵦ𝒸𝒹ₑ𝒻𝓰ₕᵢⱼₖₗₘₙₒₚᵩᵣₛₜᵤᵥ𝓌ₓᵧ𝓏₀₁₂₃₄₅₆₇₈₉",
-  // New styles
-  circled: "ⒶⒷⒸⒹⒺⒻⒼⒽⒾⒿⓀⓁⓂⓃⓄⓅⓆⓇⓈⓉⓊⓋⓌⓍⓎⓏⓐⓑⓒⓓⓔⓕⓖⓗⓘⓙⓚⓛⓜⓝⓞⓟⓠⓡⓢⓣⓤⓥⓦⓧⓨⓩ⓪①②③④⑤⑥⑦⑧⑨",
-  negativeCircled: "🅐🅑🅒🅓🅔🅕🅖🅗🅘🅙🅚🅛🅜🅝🅞🅟🅠🅡🅢🅣🅤🅥🅦🅧🅨🅩🅐🅑🅒🅓🅔🅕🅖🅗🅘🅙🅚🅛🅜🅝🅞🅟🅠🅡🅢🅣🅤🅥🅦🅧🅨🅩⓿❶❷❸❹❺❻❼❽❾",
-  squared: "🄰🄱🄲🄳🄴🄵🄶🄷🄸🄹🄺🄻🄼🄽🄾🄿🅀🅁🅂🅃🅄🅅🅆🅇🅈🅉🄰🄱🄲🄳🄴🄵🄶🄷🄸🄹🄺🄻🄼🄽🄾🄿🅀🅁🅂🅃🅄🅅🅆🅇🅈🅉0123456789",
-  negativeSquared: "🅰🅱🅲🅳🅴🅵🅶🅷🅸🅹🅺🅻🅼🅽🅾🅿🆀🆁🆂🆃🅄🅅🅆🆇🆈🆉🅰🅱🅲🅳🅴🅵🅶🅷🅸🅹🅺🅻🅼🅽🅾🅿🆀🆁🆂🆃🅄🅅🅆🆇🆈🆉0123456789",
-  cursive: "𝓐𝓑𝓒𝓓𝓔𝓕𝓖𝓗𝓘𝓙𝓚𝓛𝓜𝓝𝓞𝓟𝓠𝓡𝓢𝓣𝓤𝓥𝓦𝓧𝓨𝓩𝓪𝓫𝓬𝓭𝓮𝓯𝓰𝓱𝓲𝓳𝓴𝓵𝓶𝓷𝓸𝓹𝓺𝓻𝓼𝓽𝓾𝓿𝔀𝔁𝔂𝔃0123456789",
-  oldEnglish: "𝔄𝔅ℭ𝔇𝔈𝔉𝔊ℌℑ𝔍𝔎𝔏𝔐𝔑𝔒𝔓𝔔ℜ𝔖𝔗𝔘𝔙𝔚𝔛𝔜ℨ𝔞𝔟𝔠𝔡𝔢𝔣𝔤𝔥𝔦𝔧𝔨𝔩𝔪𝔫𝔬𝔭𝔮𝔯𝔰𝔱𝔲𝔳𝔴𝔵𝔶𝔷0123456789",
-  wide: "ＡＢＣＤＥＦＧＨＩＪＫＬＭＮＯＰＱＲＳＴＵＶＷＸＹＺ\uff41\uff42\uff43\uff44\uff45\uff46\uff47\uff48\uff49\uff4a\uff4b\uff4c\uff4d\uff4e\uff4f\uff50\uff51\uff52\uff53\uff54\uff55\uff56\uff57\uff58\uff59\uff5a\uff10\uff11\uff12\uff13\uff14\uff15\uff16\uff17\uff18\uff19",
-  inverted: "ɐqɔpǝɟƃɥᴉɾʞlɯuodbɹsʇnʌʍxʎzɐqɔpǝɟƃɥᴉɾʞlɯuodbɹsʇnʌʍxʎz0ƖᄅƐㄣϛ9ㄥ86",
-  mirror: "AdↃbƎꟻGHIJK⅃MᴎOꟼpᴙꙄTUVWXYZɒdↃbɘꟻgʜiꞁʞlmnoqpɿꙅTuvwxyz0123456789",
-  tiny: "ᴀʙᴄᴅᴇꜰɢʜɪᴊᴋʟᴍɴᴏᴘǫʀsᴛᴜᴠᴡxʏᴢᵃᵇᶜᵈᵉᶠᵍʰⁱʲᵏˡᵐⁿᵒᵖᵠʳˢᵗᵘᵛʷˣʸᶻ⁰¹²³⁴⁵⁶⁷⁸⁹",
-  outline: "𝕬𝕭𝕮𝕯𝕰𝕱𝕲𝕳𝕴𝕵𝕶𝕷𝕸𝕹𝕺𝕻𝕼𝕽𝕾𝕿𝖀𝖁𝖂𝖃𝖄𝖅𝖆𝖇𝖈𝖉𝖊𝖋𝖌𝖍𝖎𝖏𝖐𝖑𝖒𝖓𝖔𝖕𝖖𝖗𝖘𝖙𝖚𝖛𝖜𝖝𝖞𝖟0123456789",
-  strikethrough: "A̶B̶C̶D̶E̶F̶G̶H̶I̶J̶K̶L̶M̶N̶O̶P̶Q̶R̶S̶T̶U̶V̶W̶X̶Y̶Z̶a̶b̶c̶d̶e̶f̶g̶h̶i̶j̶k̶l̶m̶n̶o̶p̶q̶r̶s̶t̶u̶v̶w̶x̶y̶z̶0̶1̶2̶3̶4̶5̶6̶7̶8̶9̶",
-  underline: "A̲B̲C̲D̲E̲F̲G̲H̲I̲J̲K̲L̲M̲N̲O̲P̲Q̲R̲S̲T̲U̲V̲W̲X̲Y̲Z̲a̲b̲c̲d̲e̲f̲g̲h̲i̲j̲k̲l̲m̲n̲o̲p̲q̲r̲s̲t̲u̲v̲w̲x̲y̲z̲0̲1̲2̲3̲4̲5̲6̲7̲8̲9̲",
-  dotted: "Ä̤B̤̈C̤̈D̤̈Ë̤F̤̈G̤̈Ḧ̤Ï̤J̤̈K̤̈L̤̈M̤̈N̤̈Ö̤P̤̈Q̤̈R̤̈S̤̈T̤̈Ṳ̈V̤̈Ẅ̤Ẍ̤Ÿ̤Z̤̈ä̤b̤̈c̤̈d̤̈ë̤f̤̈g̤̈ḧ̤ï̤j̤̈k̤̈l̤̈m̤̈n̤̈ö̤p̤̈q̤̈r̤̈s̤̈ẗ̤ṳ̈v̤̈ẅ̤ẍ̤ÿ̤z̤̈0̤̈1̤̈2̤̈3̤̈4̤̈5̤̈6̤̈7̤̈8̤̈9̤̈",
-  wavy: "A͂B͂C͂D͂E͂F͂G͂H͂I͂J͂K͂L͂M͂N͂O͂P͂Q͂R͂S͂T͂U͂V͂W͂X͂Y͂Z͂a͂b͂c͂d͂e͂f͂g͂h͂i͂j͂k͂l͂m͂n͂o͂p͂q͂r͂s͂t͂u͂v͂w͂x͂y͂z͂0͂1͂2͂3͂4͂5͂6͂7͂8͂9͂",
+// Define the style names for the UI
+const styleNames = {
+  // Standard Unicode styles
+  normal: "Normal",
+  bold: "Bold",
+  italic: "Italic",
+  boldItalic: "Bold Italic",
+  script: "Script",
+  boldScript: "Bold Script",
+  fraktur: "Fraktur",
+  boldFraktur: "Bold Fraktur",
+  doubleStruck: "Double Struck",
+  monospace: "Monospace",
+  sansSerif: "Sans Serif",
+  sansSerifBold: "Sans Serif Bold",
+  sansSerifItalic: "Sans Serif Italic",
+  sansSerifBoldItalic: "Sans Serif Bold Italic",
+  circled: "Circled",
+  parenthesized: "Parenthesized",
+  fullWidth: "Full Width",
+  smallCaps: "Small Caps",
+  superscript: "Superscript",
+  subscript: "Subscript",
+  
+  // Custom styles
+  bubbles: "Bubbles",
+  squares: "Squares",
+  invertedSquares: "Inverted Squares",
+  medieval: "Medieval",
+  cursive: "Cursive",
+  oldEnglish: "Old English",
+  wireframe: "Wireframe",
+  hearts: "Hearts",
+  stars: "Stars",
+  brackets: "Brackets",
+  strikethrough: "Strikethrough",
+  underline: "Underline",
+  dotted: "Dotted",
+  wavy: "Wavy",
+  retro: "Retro",
+  vaporwave: "Vaporwave",
+  glitch: "Glitch",
+  sparkles: "Sparkles",
+  flowers: "Flowers",
+  blocks: "Blocks",
+  outlined: "Outlined",
+  neon: "Neon",
+  shadow: "Shadow",
+  mirror: "Mirror",
+  upside: "Upside Down",
+  zalgo: "Zalgo",
+  morse: "Morse Code",
+  binary: "Binary",
+  leetspeak: "Leetspeak",
+  emoji: "Emoji"
 }
 
-// Update the sample texts to include some of the new styles
 // Sample texts for the examples
 const sampleTexts = [
-  { text: "NOOB", style: "doubleStruck" },
-  { text: "LOVE", style: "cursive" },
-  { text: "PRO GAMER", style: "bold" },
-  { text: "COOL BIO", style: "circled" },
-  { text: "FORTNITE", style: "negativeSquared" },
-  { text: "TIKTOK", style: "outline" },
+  { text: "NOOB", style: "boldFraktur" },
+  { text: "LOVE", style: "boldScript" },
+  { text: "PRO GAMER", style: "sansSerifBold" },
+  { text: "COOL BIO", style: "doubleStruck" },
+  { text: "FORTNITE", style: "fraktur" },
+  { text: "TIKTOK", style: "monospace" },
+  { text: "AESTHETIC", style: "vaporwave" },
+  { text: "SAVAGE", style: "brackets" },
+  { text: "QUEEN", style: "hearts" }
 ]
 
+// Flag to determine if we're on the client side
+const isClient = typeof window !== 'undefined';
+
+// Custom character mappings for styles not available in the package
+type StyleMapWithChars = {
+  chars: string;
+  base: string;
+  prefix?: string;
+  suffix?: string;
+  join?: string;
+};
+
+type StyleMapWithTransform = {
+  transform: (text: string) => string;
+  clientSideOnly?: boolean; // Flag for transforms that should only run on client
+};
+
+type StyleMap = StyleMapWithChars | StyleMapWithTransform;
+
+const customStyleMaps: Record<string, StyleMap> = {
+  bubbles: {
+    chars: "ⓐⓑⓒⓓⓔⓕⓖⓗⓘⓙⓚⓛⓜⓝⓞⓟⓠⓡⓢⓣⓤⓥⓦⓧⓨⓩⒶⒷⒸⒹⒺⒻⒼⒽⒾⒿⓀⓁⓂⓃⓄⓅⓆⓇⓈⓉⓊⓋⓌⓍⓎⓏ0123456789",
+    base: "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789"
+  },
+  squares: {
+    chars: "🄰🄱🄲🄳🄴🄵🄶🄷🄸🄹🄺🄻🄼🄽🄾🄿🅀🅁🅂🅃🅄🅅🅆🅇🅈🅉🄰🄱🄲🄳🄴🄵🄶🄷🄸🄹🄺🄻🄼🄽🄾🄿🅀🅁🅂🅃🅄🅅🅆🅇🅈🅉0123456789",
+    base: "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789"
+  },
+  invertedSquares: {
+    chars: "🅰🅱🅲🅳🅴🅵🅶🅷🅸🅹🅺🅻🅼🅽🅾🅿🆀🆁🆂🆃🆄🆅🆆🆇🆈🆉🅰🅱🅲🅳🅴🅵🅶🅷🅸🅹🅺🅻🅼🅽🅾🅿🆀🆁🆂🆃🆄🆅🆆🆇🆈🆉0123456789",
+    base: "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789"
+  },
+  medieval: {
+    chars: "𝖆𝖇𝖈𝖉𝖊𝖋𝖌𝖍𝖎𝖏𝖐𝖑𝖒𝖓𝖔𝖕𝖖𝖗𝖘𝖙𝖚𝖛𝖜𝖝𝖞𝖟𝕬𝕭𝕮𝕯𝕰𝕱𝕲𝕳𝕴𝕵𝕶𝕷𝕸𝕹𝕺𝕻𝕼𝕽𝕾𝕿𝖀𝖁𝖂𝖃𝖄𝖅0123456789",
+    base: "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789"
+  },
+  hearts: {
+    chars: "αв¢∂єƒgнιנкℓмησρqяѕтυνωχуzαв¢∂єƒgнιנкℓмησρqяѕтυνωχуz0123456789",
+    base: "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789",
+    prefix: "❤️ ",
+    suffix: " ❤️"
+  },
+  stars: {
+    chars: "αв¢∂єƒgнιנкℓмησρqяѕтυνωχуzαв¢∂єƒgнιנкℓмησρqяѕтυνωχуz0123456789",
+    base: "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789",
+    prefix: "⭐ ",
+    suffix: " ⭐"
+  },
+  brackets: {
+    chars: "⟨ᗷᑕᗪᗴᖴᘜᕼIᒍKᒪᗰᑎOᑭᑫᖇᔕTᑌᐯᗯ᙭YᘔᗩᗷᑕᗪᗴᖴᘜᕼIᒍKᒪᗰᑎOᑭᑫᖇᔕTᑌᐯᗯ᙭Yᘔ0123456789",
+    base: "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789",
+    prefix: "『 ",
+    suffix: " 』"
+  },
+  vaporwave: {
+    chars: "ａｂｃｄｅｆｇｈｉｊｋｌｍｎｏｐｑｒｓｔｕｖｗｘｙｚＡＢＣＤＥＦＧＨＩＪＫＬＭＮＯＰＱＲＳＴＵＶＷＸＹＺ０１２３４５６７８９",
+    base: "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789",
+    join: " "
+  },
+  sparkles: {
+    chars: "αв¢∂єƒgнιנкℓмησρqяѕтυνωχуzαв¢∂єƒgнιנкℓмησρqяѕтυνωχуz0123456789",
+    base: "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789",
+    prefix: "✨ ",
+    suffix: " ✨",
+    join: " "
+  },
+  upside: {
+    chars: "ɐqɔpǝɟƃɥᴉɾʞlɯuodbɹsʇnʌʍxʎzⱯꓭͻᗡƎℲ⅁ꓧIſꓘꓶꓯNOԀÒꓤSꓕՈΛϺX⅄Z0ІᘔƐᔭϛ9ㄥ86",
+    base: "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789"
+  },
+  glitch: {
+    transform: (text: string): string => {
+      const glitchChars = ['̷̧', '̵̨', '̸̧', '̷̠', '̸̢', '̶̡', '̵̪'];
+      let result = '';
+      for (let i = 0; i < text.length; i++) {
+        result += text[i] + (Math.random() > 0.7 ? glitchChars[Math.floor(Math.random() * glitchChars.length)] : '');
+      }
+      return result;
+    },
+    clientSideOnly: true // Mark as client-side only due to random elements
+  },
+  leetspeak: {
+    transform: (text: string): string => {
+      const leetMap: Record<string, string> = {
+        'a': '4', 'e': '3', 'i': '1', 'o': '0', 's': '5', 't': '7', 'b': '8', 'l': '1'
+      };
+      return text.toLowerCase().split('').map((char: string) => leetMap[char] || char).join('');
+    }
+  },
+  morse: {
+    transform: (text: string): string => {
+      const morseMap: Record<string, string> = {
+        'a': '.-', 'b': '-...', 'c': '-.-.', 'd': '-..', 'e': '.', 'f': '..-.', 'g': '--.', 'h': '....',
+        'i': '..', 'j': '.---', 'k': '-.-', 'l': '.-..', 'm': '--', 'n': '-.', 'o': '---', 'p': '.--.',
+        'q': '--.-', 'r': '.-.', 's': '...', 't': '-', 'u': '..-', 'v': '...-', 'w': '.--', 'x': '-..-',
+        'y': '-.--', 'z': '--..', '0': '-----', '1': '.----', '2': '..---', '3': '...--', '4': '....-',
+        '5': '.....', '6': '-....', '7': '--...', '8': '---..', '9': '----.'
+      };
+      return text.toLowerCase().split('').map((char: string) => morseMap[char] || char).join(' ');
+    }
+  },
+  binary: {
+    transform: (text: string): string => {
+      return text.split('').map((char: string) => char.charCodeAt(0).toString(2).padStart(8, '0')).join(' ');
+    }
+  },
+  zalgo: {
+    transform: (text: string): string => {
+      const zalgoUp = [
+        '\u030d', '\u030e', '\u0304', '\u0305', '\u033f', '\u0311', '\u0306', '\u0310',
+        '\u0352', '\u0357', '\u0351', '\u0307', '\u0308', '\u030a', '\u0342', '\u0343',
+        '\u0344', '\u034a', '\u034b', '\u034c', '\u0303', '\u0302', '\u030c', '\u0350',
+        '\u0300', '\u0301', '\u030b', '\u030f', '\u0312', '\u0313', '\u0314', '\u033d',
+        '\u0309', '\u0363', '\u0364', '\u0365', '\u0366', '\u0367', '\u0368', '\u0369',
+        '\u036a', '\u036b', '\u036c', '\u036d', '\u036e', '\u036f', '\u033e', '\u035b',
+      ];
+      
+      let result = '';
+      for (let i = 0; i < text.length; i++) {
+        result += text[i];
+        // Add 1-3 random zalgo characters
+        const zalgoCount = Math.floor(Math.random() * 3) + 1;
+        for (let j = 0; j < zalgoCount; j++) {
+          const randomZalgo = zalgoUp[Math.floor(Math.random() * zalgoUp.length)];
+          result += randomZalgo;
+        }
+      }
+      return result;
+    },
+    clientSideOnly: true // Mark as client-side only due to random elements
+  },
+  emoji: {
+    transform: (text: string): string => {
+      // Convert text to emoji representation by adding emoji between chars
+      const emojis = ['🔥', '💯', '✨', '💖', '👑', '🌟', '💫', '🎯', '🌈'];
+      let result = '';
+      for (let i = 0; i < text.length; i++) {
+        result += text[i];
+        if (i < text.length - 1 && text[i] !== ' ' && text[i+1] !== ' ') {
+          result += emojis[Math.floor(Math.random() * emojis.length)];
+        }
+      }
+      return result;
+    },
+    clientSideOnly: true // Mark as client-side only due to random elements
+  }
+};
+
+// Custom mapping for fraktur since the package one might not work well
+function transformToFraktur(text: string) {
+  const frakturMap: Record<string, string> = {
+    'a': '𝔞', 'b': '𝔟', 'c': '𝔠', 'd': '𝔡', 'e': '𝔢', 'f': '𝔣', 'g': '𝔤', 'h': '𝔥', 'i': '𝔦', 'j': '𝔧',
+    'k': '𝔨', 'l': '𝔩', 'm': '𝔪', 'n': '𝔫', 'o': '𝔬', 'p': '𝔭', 'q': '𝔮', 'r': '𝔯', 's': '𝔰', 't': '𝔱',
+    'u': '𝔲', 'v': '𝔳', 'w': '𝔴', 'x': '𝔵', 'y': '𝔶', 'z': '𝔷',
+    'A': '𝔄', 'B': '𝔅', 'C': 'ℭ', 'D': '𝔇', 'E': '𝔈', 'F': '𝔉', 'G': '𝔊', 'H': 'ℌ', 'I': 'ℑ', 'J': '𝔍',
+    'K': '𝔎', 'L': '𝔏', 'M': '𝔐', 'N': '𝔑', 'O': '𝔒', 'P': '𝔓', 'Q': '𝔔', 'R': 'ℜ', 'S': '𝔖', 'T': '𝔗',
+    'U': '𝔘', 'V': '𝔙', 'W': '𝔚', 'X': '𝔛', 'Y': '𝔜', 'Z': 'ℨ'
+  };
+  
+  return text.split('').map(char => frakturMap[char] || char).join('');
+}
+
+// Custom mapping for double struck since the package one might not work well
+function transformToDoubleStruck(text: string) {
+  const doubleStruckMap: Record<string, string> = {
+    'a': '𝕒', 'b': '𝕓', 'c': '𝕔', 'd': '𝕕', 'e': '𝕖', 'f': '𝕗', 'g': '𝕘', 'h': '𝕙', 'i': '𝕚', 'j': '𝕛',
+    'k': '𝕜', 'l': '𝕝', 'm': '𝕞', 'n': '𝕟', 'o': '𝕠', 'p': '𝕡', 'q': '𝕢', 'r': '𝕣', 's': '𝕤', 't': '𝕥',
+    'u': '𝕦', 'v': '𝕧', 'w': '𝕨', 'x': '𝕩', 'y': '𝕪', 'z': '𝕫',
+    'A': '𝔸', 'B': '𝔹', 'C': 'ℂ', 'D': '𝔻', 'E': '𝔼', 'F': '𝔽', 'G': '𝔾', 'H': 'ℍ', 'I': '𝕀', 'J': '𝕁',
+    'K': '𝕂', 'L': '𝕃', 'M': '𝕄', 'N': 'ℕ', 'O': '𝕆', 'P': 'ℙ', 'Q': 'ℚ', 'R': 'ℝ', 'S': '𝕊', 'T': '𝕋',
+    'U': '𝕌', 'V': '𝕍', 'W': '𝕎', 'X': '𝕏', 'Y': '𝕐', 'Z': 'ℤ',
+    '0': '𝟘', '1': '𝟙', '2': '𝟚', '3': '𝟛', '4': '𝟜', '5': '𝟝', '6': '𝟞', '7': '𝟟', '8': '𝟠', '9': '𝟡'
+  };
+  
+  return text.split('').map(char => doubleStruckMap[char] || char).join('');
+}
+
+// Group styles by category
+const styleCategories = {
+  "Unicode Styles": ["normal", "bold", "italic", "boldItalic", "script", "boldScript", "fraktur", "boldFraktur", 
+                     "doubleStruck", "monospace", "sansSerif", "sansSerifBold", "sansSerifItalic", "sansSerifBoldItalic"],
+  "Symbols & Shapes": ["circled", "parenthesized", "bubbles", "squares", "invertedSquares"],
+  "Decorative": ["hearts", "stars", "brackets", "sparkles"],
+  "Transformations": ["vaporwave", "glitch", "upside", "zalgo", "mirror"],
+  "Encodings": ["morse", "binary", "leetspeak"],
+  "Fun": ["emoji"]
+};
+
+// Safer conversion function that handles package errors
+const safeTransform = (text: string, fontName: string): string => {
+  try {
+    const fonts = getFonts();
+    if (!fonts[fontName]) {
+      console.warn(`Font not found: ${fontName}`);
+      return text;
+    }
+    return transform(text, fonts[fontName]);
+  } catch (error) {
+    console.error(`Error transforming with font ${fontName}:`, error);
+    return text;
+  }
+};
+
+// Convert text to the selected style using the package or custom mappings
+const convertText = (text: string, style: string) => {
+  if (!text) return "";
+  
+  // Use the normal style (no transformation) if style is "normal"
+  if (style === "normal") return text;
+  
+  try {
+    // Special case for fraktur and doubleStruck, use custom mapping
+    if (style === "fraktur") {
+      return transformToFraktur(text);
+    } else if (style === "doubleStruck") {
+      return transformToDoubleStruck(text);
+    }
+    
+    // Check if this is a custom style with appropriate mapping
+    const styleMap = customStyleMaps[style as keyof typeof customStyleMaps];
+    
+    if (styleMap) {
+      // If it's a client-side only transform and we're on the server, return original text
+      if ('transform' in styleMap && styleMap.clientSideOnly && !isClient) {
+        return text;
+      }
+      
+      // Check if this is a transform-based style
+      if ('transform' in styleMap) {
+        return styleMap.transform(text);
+      }
+      
+      // Otherwise it's a character mapping style
+      const prefix = (styleMap as StyleMapWithChars).prefix || '';
+      const suffix = (styleMap as StyleMapWithChars).suffix || '';
+      const join = (styleMap as StyleMapWithChars).join || '';
+      
+      let resultArray = text.split('').map(char => {
+        const index = (styleMap as StyleMapWithChars).base.indexOf(char);
+        if (index !== -1) {
+          return (styleMap as StyleMapWithChars).chars[index] || char;
+        }
+        return char;
+      });
+      
+      const resultString = join ? resultArray.join(join) : resultArray.join('');
+      return prefix + resultString + suffix;
+    }
+    
+    // Otherwise use the package with safe transformation
+    return safeTransform(text, style);
+  } catch (error) {
+    console.error("Error converting text:", error);
+    return text;
+  }
+}
+
 export default function FancyTextGenerator() {
-  const [inputText, setInputText] = useState("")
-  const [selectedStyle, setSelectedStyle] = useState("bold")
-  const [convertedText, setConvertedText] = useState("")
-  const [adCount, setAdCount] = useState(0)
-  const textareaRef = useRef<HTMLTextAreaElement>(null)
+  const [inputText, setInputText] = useState("");
+  const [selectedStyle, setSelectedStyle] = useState("bold");
+  const [convertedText, setConvertedText] = useState("");
+  const [adCount, setAdCount] = useState(0);
+  const [selectedCategory, setSelectedCategory] = useState("Unicode Styles");
+  const [sampleButtonTexts, setSampleButtonTexts] = useState<Record<number, string>>({});
+  const textareaRef = useRef<HTMLTextAreaElement>(null);
 
   // Focus the textarea on page load
   useEffect(() => {
     if (textareaRef.current) {
-      textareaRef.current.focus()
+      textareaRef.current.focus();
     }
-  }, [])
+  }, []);
 
   // Convert text when input or style changes
   useEffect(() => {
-    setConvertedText(convertText(inputText, selectedStyle))
-  }, [inputText, selectedStyle])
+    setConvertedText(convertText(inputText, selectedStyle));
+  }, [inputText, selectedStyle]);
+
+  // Pre-compute sample button text conversions on client side
+  useEffect(() => {
+    const precomputedTexts: Record<number, string> = {};
+    sampleTexts.forEach((sample, index) => {
+      precomputedTexts[index] = convertText(sample.text, sample.style);
+    });
+    setSampleButtonTexts(precomputedTexts);
+  }, []);
 
   // Show popup ad after 3 style conversions
   useEffect(() => {
     if (adCount === 3) {
       const timer = setTimeout(() => {
-        // This would be replaced with actual ad code
         toast({
           title: "Ad",
           description: "This would be a popup ad in a real implementation",
           variant: "default",
-        })
-      }, 5000)
+        });
+      }, 5000);
 
-      return () => clearTimeout(timer)
+      return () => clearTimeout(timer);
     }
-  }, [adCount])
-
-  // Function to convert text to the selected style
-  const convertText = (text: string, style: string) => {
-    if (!text) return ""
-
-    const normalChars = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789".split("")
-    const styleChars = fontStyles[style as keyof typeof fontStyles]?.split("") || normalChars
-
-    // Special handling for styles with combining characters
-    if (["strikethrough", "underline", "dotted", "wavy"].includes(style)) {
-      return text
-        .split("")
-        .map((char) => {
-          const index = normalChars.indexOf(char)
-          if (index !== -1) {
-            return styleChars[index] || char
-          }
-          return char
-        })
-        .join("")
-    }
-
-    // Special handling for inverted and mirror text
-    if (style === "inverted") {
-      return text
-        .split("")
-        .map((char) => {
-          const index = normalChars.indexOf(char)
-          if (index !== -1) {
-            return styleChars[index] || char
-          }
-          return char
-        })
-        .join("")
-        .split("")
-        .reverse()
-        .join("")
-    }
-
-    if (style === "mirror") {
-      return text
-        .split("")
-        .map((char) => {
-          const index = normalChars.indexOf(char)
-          if (index !== -1) {
-            return styleChars[index] || char
-          }
-          return char
-        })
-        .join("")
-    }
-
-    // Standard conversion for other styles
-    return text
-      .split("")
-      .map((char) => {
-        const index = normalChars.indexOf(char)
-        if (index !== -1) {
-          return styleChars[index] || char
-        }
-        return char
-      })
-      .join("")
-  }
+  }, [adCount]);
 
   // Handle style button click
   const handleStyleClick = (style: string) => {
-    setSelectedStyle(style)
-    setAdCount((prev) => prev + 1)
-  }
+    setSelectedStyle(style);
+    setAdCount((prev) => prev + 1);
+  };
 
   // Copy text to clipboard
   const copyToClipboard = () => {
-    navigator.clipboard.writeText(convertedText)
+    navigator.clipboard.writeText(convertedText);
     toast({
       title: "Copied! ✅",
       description: "Paste into Instagram/TikTok.",
-      variant: "success",
-    })
-  }
+      variant: "default",
+    });
+  };
 
   // Apply sample text
-  const applySampleText = (text: string, style: string) => {
-    setInputText(text)
-    setSelectedStyle(style)
-  }
+  const applySampleText = (sample: { text: string; style: string }) => {
+    setInputText(sample.text);
+    setSelectedStyle(sample.style);
+  };
 
   return (
     <div className="min-h-screen bg-[#0F172A] text-white">
@@ -197,21 +429,41 @@ export default function FancyTextGenerator() {
               />
             </div>
 
+            {/* Style category tabs */}
+            <div className="mb-4">
+              <h3 className="text-lg font-semibold mb-2">Choose a category:</h3>
+              <div className="flex flex-wrap gap-2 mb-4">
+                {Object.keys(styleCategories).map((category) => (
+                  <Button
+                    key={category}
+                    onClick={() => setSelectedCategory(category)}
+                    className={`${
+                      selectedCategory === category
+                        ? "bg-purple-600 text-white"
+                        : "bg-gray-800 text-gray-300 hover:bg-gray-700"
+                    } rounded-lg transition-all`}
+                  >
+                    {category}
+                  </Button>
+                ))}
+              </div>
+            </div>
+
             {/* Style buttons */}
             <div className="mb-4">
               <h3 className="text-lg font-semibold mb-2">Choose a style:</h3>
-              <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-3 mb-6 max-h-[400px] overflow-y-auto p-2">
-                {Object.keys(fontStyles).map((style) => (
+              <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3 mb-6">
+                {styleCategories[selectedCategory as keyof typeof styleCategories].map((styleKey) => (
                   <Button
-                    key={style}
-                    onClick={() => handleStyleClick(style)}
+                    key={styleKey}
+                    onClick={() => handleStyleClick(styleKey)}
                     className={`border ${
-                      selectedStyle === style
+                      selectedStyle === styleKey
                         ? "border-green-400 bg-gray-800 shadow-[0_0_10px_rgba(74,222,128,0.5)]"
                         : "border-purple-500 bg-gray-900 hover:bg-gray-800"
                     } text-white rounded-lg transition-all`}
                   >
-                    {convertText(style, style)}
+                    {styleNames[styleKey as keyof typeof styleNames]}
                   </Button>
                 ))}
               </div>
@@ -219,8 +471,8 @@ export default function FancyTextGenerator() {
 
             {/* Preview area */}
             <div className="mb-6">
-              <div className="p-4 bg-gray-900 border-2 border-green-400 rounded-lg shadow-[0_0_10px_rgba(74,222,128,0.3)] min-h-16 flex items-center">
-                <p className="text-xl break-words w-full">{convertedText || "Preview will appear here"}</p>
+              <div className="p-4 bg-gray-900 border-2 border-green-400 rounded-lg shadow-[0_0_10px_rgba(74,222,128,0.3)] min-h-16">
+                <p className="text-xl break-words">{convertedText || "Preview will appear here"}</p>
               </div>
             </div>
 
@@ -241,11 +493,11 @@ export default function FancyTextGenerator() {
                 {sampleTexts.map((sample, index) => (
                   <Button
                     key={index}
-                    onClick={() => applySampleText(sample.text, sample.style)}
+                    onClick={() => applySampleText(sample)}
                     variant="outline"
                     className="border border-purple-500 bg-gray-900 hover:bg-gray-800 text-white"
                   >
-                    {sample.text} → {convertText(sample.text, sample.style)}
+                    {sample.text} {isClient && "→"} {isClient ? sampleButtonTexts[index] || sample.text : sample.text}
                   </Button>
                 ))}
               </div>
