@@ -5,6 +5,7 @@ import { Textarea } from "@/components/ui/textarea"
 import { toast } from "@/hooks/use-toast"
 import { getFonts, transform } from "convert-unicode-fonts"
 import { Copy } from "lucide-react"
+import Script from "next/script"
 import { useEffect, useRef, useState } from "react"
 
 // Define the style names for the UI
@@ -76,6 +77,21 @@ const sampleTexts = [
   { text: "SAVAGE", style: "brackets" },
   { text: "QUEEN", style: "hearts" }
 ]
+
+type AdsenseTypes = {
+  pid: string;
+}
+
+const AdSense = ({ pid }: AdsenseTypes) => {
+  return (
+    <Script 
+    async
+    src={`https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=${pid}`}
+    crossOrigin="anonymous"
+    strategy="afterInteractive"
+    />
+  )
+}
 
 // Flag to determine if we're on the client side
 const isClient = typeof window !== 'undefined';
@@ -405,7 +421,7 @@ export default function FancyTextGenerator() {
     <div className="min-h-screen bg-[#0F172A] text-white">
       {/* Ad placeholder - Leaderboard */}
       <div className="w-full h-24 bg-gray-800 flex items-center justify-center border border-purple-500 mb-6">
-        <p className="text-gray-400">Ad Slot - Leaderboard (728x90)</p>
+        <AdSense pid="ca-pub-9710534353231565" />
       </div>
 
       <main className="container mx-auto px-4 py-8">
@@ -420,7 +436,7 @@ export default function FancyTextGenerator() {
           {/* Left Sidebar ad placeholder */}
           <div className="hidden lg:block w-[300px] h-[600px] bg-gray-800 flex-shrink-0 border border-purple-500 self-start sticky top-4">
             <div className="flex items-center justify-center h-full">
-              <p className="text-gray-400">Ad Slot - Left Sidebar (300x600)</p>
+              <AdSense pid="ca-pub-9710534353231565" />
             </div>
           </div>
 
@@ -512,14 +528,14 @@ export default function FancyTextGenerator() {
 
             {/* Mobile ad placeholder */}
             <div className="lg:hidden w-full h-20 bg-gray-800 flex items-center justify-center border border-purple-500 mb-6">
-              <p className="text-gray-400">Ad Slot - Mobile Footer</p>
+              <AdSense pid="ca-pub-9710534353231565" />
             </div>
           </div>
 
           {/* Sidebar ad placeholder */}
           <div className="hidden lg:block w-[300px] h-[600px] bg-gray-800 flex-shrink-0 border border-purple-500 self-start sticky top-4">
             <div className="flex items-center justify-center h-full">
-              <p className="text-gray-400">Ad Slot - Sidebar (300x600)</p>
+              <AdSense pid="ca-pub-9710534353231565" />
             </div>
           </div>
         </div>
