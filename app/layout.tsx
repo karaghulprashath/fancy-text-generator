@@ -1,7 +1,7 @@
-import type React from "react"
 import "@/app/globals.css"
-import { Inter } from "next/font/google"
 import { ThemeProvider } from "@/components/theme-provider"
+import { Inter } from "next/font/google"
+import type React from "react"
 
 const inter = Inter({ subsets: ["latin"] })
 
@@ -26,6 +26,7 @@ export default function RootLayout({
         <meta property="og:description" content="Create stylish text for Instagram, TikTok, and gaming usernames" />
         <meta property="og:image" content="/og-image.jpg" />
         <meta property="og:type" content="website" />
+        <meta name="google-adsense-account" content="ca-pub-9710534353231565"></meta>
         <script
           type="application/ld+json"
           dangerouslySetInnerHTML={{

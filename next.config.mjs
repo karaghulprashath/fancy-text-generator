@@ -17,8 +17,12 @@ const nextConfig = {
     unoptimized: true,
   },
   output: "export",
-  basePath: "/fancy-text-generator",
-  assetPrefix: "/fancy-text-generator/",
+  ...(process.env.NODE_ENV === "production"
+    ? {
+        basePath: "/fancy-text-generator",
+        assetPrefix: "/fancy-text-generator/",
+      }
+    : {}),
   experimental: {
     webpackBuildWorker: true,
     parallelServerBuildTraces: true,
