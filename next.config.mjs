@@ -17,6 +17,8 @@ const nextConfig = {
     unoptimized: true,
   },
   output: "export",
+  basePath: "/fancy-text-generator",
+  assetPrefix: "/fancy-text-generator/",
   experimental: {
     webpackBuildWorker: true,
     parallelServerBuildTraces: true,
