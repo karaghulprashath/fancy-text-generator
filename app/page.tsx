@@ -106,7 +106,7 @@ const customStyleMaps: Record<string, StyleMap> = {
     base: "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789"
   },
   invertedSquares: {
-    chars: "🅰🅱🅲🅳🅴🅵🅶🅷🅸🅹🅺🅻🅼🅽🅾🅿🆀🆁🆂🆃🆄🆅🆆🆇🆈🆉🅰🅱🅲🅳🅴🅵🅶🅷🅸🅹🅺🅻🅼🅽🅾🅿🆀🆁🆂🆃🆄🆅🆆🆇🆈🆉0123456789",
+    chars: "🅰🅱🅲🅳🅴🅵🅶🅷🅸🅹🅺🅻🅼🅽🅾🅿🆀🆁🆂🆃🆄🅅🅆🅇🅈🅉🅰🅱🅲🅳🅴🅵🅶🅷🅸🅹🅺🅻🅼🅽🅾🅿🆀🆁🆂🆃🆄🅅🅆🅇🅈🅉0123456789",
     base: "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789"
   },
   medieval: {
@@ -417,6 +417,13 @@ export default function FancyTextGenerator() {
         </h2>
 
         <div className="flex flex-col lg:flex-row gap-6">
+          {/* Left Sidebar ad placeholder */}
+          <div className="hidden lg:block w-[300px] h-[600px] bg-gray-800 flex-shrink-0 border border-purple-500 self-start sticky top-4">
+            <div className="flex items-center justify-center h-full">
+              <p className="text-gray-400">Ad Slot - Left Sidebar (300x600)</p>
+            </div>
+          </div>
+
           <div className="flex-1">
             {/* Input area */}
             <div className="mb-6">
@@ -524,8 +531,18 @@ export default function FancyTextGenerator() {
             If all the good usernames are taken, consider getting your own custom domain name!
           </p>
           <div className="flex flex-wrap gap-4">
-            <Button className="bg-purple-500 hover:bg-purple-600">Check Availability on Namecheap</Button>
-            <Button className="bg-green-500 hover:bg-green-600">Browse GoDaddy Domains</Button>
+            <Button 
+              className="bg-purple-500 hover:bg-purple-600"
+              onClick={() => window.open('https://www.namecheap.com/domains/domain-name-search/?aff=148051', '_blank')}
+            >
+              Check Availability on Namecheap
+            </Button>
+            <Button 
+              className="bg-green-500 hover:bg-green-600"
+              onClick={() => window.open('https://www.godaddy.com/offers/domains?isc=gofhlkwd&utm_source=affiliate', '_blank')}
+            >
+              Browse GoDaddy Domains
+            </Button>
           </div>
         </div>
       </main>
