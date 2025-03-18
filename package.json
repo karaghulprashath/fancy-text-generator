@@ -7,7 +7,7 @@
     "build": "next build",
     "start": "next start",
     "lint": "next lint",
-    "deploy": "next build && touch out/.nojekyll && git add out/ && git commit -m \"Deploy Next.js site to GitHub Pages\" && git subtree push --prefix out origin gh-pages-2"
+    "deploy": "next build && touch out/.nojekyll && git add out/ && git commit -m \"Deploy Next.js site to GitHub Pages\" && git subtree push --prefix out origin gh-pages-3"
   },
   "dependencies": {
     "@hookform/resolvers": "^3.9.1",
