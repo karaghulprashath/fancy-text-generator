@@ -420,7 +420,7 @@ export default function FancyTextGenerator() {
   return (
     <div className="min-h-screen bg-[#0F172A] text-white">
       {/* Ad placeholder - Leaderboard */}
-      <div className="w-full h-24 bg-gray-800 flex items-center justify-center border border-purple-500 mb-6">
+      <div className="w-full h-4 flex items-center justify-center mb-6">
         <AdSense pid="ca-pub-9710534353231565" />
       </div>
 
@@ -434,7 +434,7 @@ export default function FancyTextGenerator() {
 
         <div className="flex flex-col lg:flex-row gap-6">
           {/* Left Sidebar ad placeholder */}
-          <div className="hidden lg:block w-[300px] h-[600px] bg-gray-800 flex-shrink-0 border border-purple-500 self-start sticky top-4">
+          <div className="hidden lg:block w-[200px] h-[600px] flex-shrink-0 self-start sticky top-4">
             <div className="flex items-center justify-center h-full">
               <AdSense pid="ca-pub-9710534353231565" />
             </div>
@@ -527,13 +527,13 @@ export default function FancyTextGenerator() {
             </div>
 
             {/* Mobile ad placeholder */}
-            <div className="lg:hidden w-full h-20 bg-gray-800 flex items-center justify-center border border-purple-500 mb-6">
+            <div className="lg:hidden w-full h-20 flex items-center justify-center mb-6">
               <AdSense pid="ca-pub-9710534353231565" />
             </div>
           </div>
 
           {/* Sidebar ad placeholder */}
-          <div className="hidden lg:block w-[300px] h-[600px] bg-gray-800 flex-shrink-0 border border-purple-500 self-start sticky top-4">
+          <div className="hidden lg:block w-[200px] h-[600px] flex-shrink-0  self-start sticky top-4">
             <div className="flex items-center justify-center h-full">
               <AdSense pid="ca-pub-9710534353231565" />
             </div>
